@@ -12,7 +12,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import CwaAuthError, CwaClient, CwaError
+from .api import CwaAuthError, CwaClient, CwaError, async_get_ssl_context
 from .const import (
     CONF_API_KEY,
     CONF_COUNTY,
@@ -70,7 +70,11 @@ def _make_coordinator(
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    client = CwaClient(async_get_clientsession(hass), entry.data[CONF_API_KEY])
+    client = CwaClient(
+        async_get_clientsession(hass),
+        entry.data[CONF_API_KEY],
+        await async_get_ssl_context(hass),
+    )
     station_id = entry.data[CONF_STATION_ID]
     county = entry.data[CONF_COUNTY]
     township = entry.data[CONF_TOWNSHIP]

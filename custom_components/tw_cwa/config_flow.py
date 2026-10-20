@@ -14,7 +14,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .api import CwaAuthError, CwaClient, CwaError
+from .api import CwaAuthError, CwaClient, CwaError, async_get_ssl_context
 from .const import (
     CONF_API_KEY,
     CONF_COUNTY,
@@ -44,15 +44,19 @@ class CwaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._townships: list[str] = []
         self._stations: list[dict[str, Any]] = []
 
-    def _client(self) -> CwaClient:
-        return CwaClient(async_get_clientsession(self.hass), self._api_key)
+    async def _client(self) -> CwaClient:
+        return CwaClient(
+            async_get_clientsession(self.hass),
+            self._api_key,
+            await async_get_ssl_context(self.hass),
+        )
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
             self._api_key = user_input[CONF_API_KEY].strip()
             try:
-                records = await self._client().get(DATASET_OBSERVATION)
+                records = await (await self._client()).get(DATASET_OBSERVATION)
             except CwaAuthError:
                 errors["base"] = "invalid_auth"
             except CwaError:
@@ -72,7 +76,7 @@ class CwaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._county = user_input[CONF_COUNTY]
             try:
-                records = await self._client().get(COUNTY_DATASETS[self._county][0])
+                records = await (await self._client()).get(COUNTY_DATASETS[self._county][0])
             except CwaAuthError:
                 errors["base"] = "invalid_auth"
             except CwaError:
