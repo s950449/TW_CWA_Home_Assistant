@@ -50,6 +50,10 @@ class CwaClient:
         self._api_key = api_key
         self._ssl = ssl_context
 
+    def _redact(self, text: object) -> str:
+        """The key travels in the query string; keep it out of logs/errors."""
+        return str(text).replace(self._api_key, "***")
+
     async def get(self, dataset: str, **params: Any) -> dict[str, Any]:
         """Fetch a dataset and return its `records` object."""
         query = {"Authorization": self._api_key, "format": "JSON", **params}
@@ -63,9 +67,10 @@ class CwaClient:
         except CwaError:
             raise
         except (aiohttp.ClientError, TimeoutError, ValueError) as err:
-            _LOGGER.warning("Request to %s failed: %r", dataset, err)
-            raise CwaError(f"Request to {dataset} failed: {err}") from err
+            reason = self._redact(f"{type(err).__name__}: {err}")
+            _LOGGER.warning("Request to %s failed: %s", dataset, reason)
+            raise CwaError(f"Request to {dataset} failed: {reason}") from None
 
         if str(body.get("success")).lower() != "true":
-            raise CwaError(f"API reported failure for {dataset}: {body}")
+            raise CwaError(f"API reported failure for {dataset}: {self._redact(body)}")
         return body.get("records") or {}
