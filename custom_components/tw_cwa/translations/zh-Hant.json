@@ -23,8 +23,9 @@
       "station": {
         "title": "觀測站",
         "data": {
-          "station_id": "觀測站",
-          "earthquake": "建立最新地震感測器 (與地點無關，只需在一個項目啟用)"
+          "station": "觀測站",
+          "earthquake": "建立最新地震感測器 (全臺資料，只需在一個項目啟用)",
+          "typhoon": "建立颱風感測器 (全臺資料，只需在一個項目啟用)"
         }
       }
     },
@@ -81,6 +82,9 @@
       },
       "earthquake_magnitude": {
         "name": "最新地震規模"
+      },
+      "typhoon_count": {
+        "name": "活動中熱帶氣旋"
       }
     }
   }

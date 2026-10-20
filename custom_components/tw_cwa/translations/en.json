@@ -23,8 +23,9 @@
       "station": {
         "title": "Observation station",
         "data": {
-          "station_id": "Observation station",
-          "earthquake": "Create latest earthquake sensor (not location specific; enable on one entry only)"
+          "station": "Observation station",
+          "earthquake": "Create latest earthquake sensor (nationwide; enable on one entry only)",
+          "typhoon": "Create typhoon sensor (nationwide; enable on one entry only)"
         }
       }
     },
@@ -81,6 +82,9 @@
       },
       "earthquake_magnitude": {
         "name": "Latest earthquake magnitude"
+      },
+      "typhoon_count": {
+        "name": "Active tropical cyclones"
       }
     }
   }

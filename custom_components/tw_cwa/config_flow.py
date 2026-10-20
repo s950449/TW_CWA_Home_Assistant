@@ -19,10 +19,13 @@ from .const import (
     CONF_API_KEY,
     CONF_COUNTY,
     CONF_EARTHQUAKE,
+    CONF_STATION_DATASET,
     CONF_STATION_ID,
     CONF_TOWNSHIP,
+    CONF_TYPHOON,
     COUNTY_DATASETS,
     DATASET_OBSERVATION,
+    DATASET_OBSERVATION_AUTO,
     DOMAIN,
 )
 from .forecast import norm_county
@@ -56,13 +59,19 @@ class CwaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._api_key = user_input[CONF_API_KEY].strip()
             try:
-                records = await (await self._client()).get(DATASET_OBSERVATION)
+                client = await self._client()
+                manned = await client.get(DATASET_OBSERVATION)
+                auto = await client.get(DATASET_OBSERVATION_AUTO)
             except CwaAuthError:
                 errors["base"] = "invalid_auth"
             except CwaError:
                 errors["base"] = "cannot_connect"
             else:
-                self._stations = records.get("Station", [])
+                self._stations = [
+                    {**st, "_dataset": DATASET_OBSERVATION} for st in manned.get("Station", [])
+                ] + [
+                    {**st, "_dataset": DATASET_OBSERVATION_AUTO} for st in auto.get("Station", [])
+                ]
                 return await self.async_step_county()
 
         return self.async_show_form(
@@ -123,41 +132,47 @@ class CwaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_station(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
+            dataset, station_id = user_input["station"].split(":", 1)
             return self.async_create_entry(
                 title=f"CWA {self._county}{self._township}",
                 data={
                     CONF_API_KEY: self._api_key,
                     CONF_COUNTY: self._county,
                     CONF_TOWNSHIP: self._township,
-                    **user_input,
+                    CONF_STATION_ID: station_id,
+                    CONF_STATION_DATASET: dataset,
+                    CONF_EARTHQUAKE: user_input[CONF_EARTHQUAKE],
+                    CONF_TYPHOON: user_input[CONF_TYPHOON],
                 },
             )
 
+        def geo(s: dict[str, Any]) -> dict[str, Any]:
+            return s.get("GeoInfo", {})
+
         in_county = [
-            s for s in self._stations
-            if norm_county(s.get("GeoInfo", {}).get("CountyName", "")) == self._county
+            s for s in self._stations if norm_county(geo(s).get("CountyName", "")) == self._county
         ] or self._stations
-        default = next(
-            (s for s in in_county if s.get("GeoInfo", {}).get("TownName") == self._township),
-            in_county[0],
-        )
+        # Prefer a station in the same township; manned stations come first in the list.
+        default = next((s for s in in_county if geo(s).get("TownName") == self._township), in_county[0])
+        kinds = {DATASET_OBSERVATION: "有人站", DATASET_OBSERVATION_AUTO: "自動站"}
         options = [
             SelectOptionDict(
-                value=s["StationId"],
-                label=f"{s['StationName']} ({s['StationId']}) "
-                f"{s.get('GeoInfo', {}).get('TownName', '')}",
+                value=f"{s['_dataset']}:{s['StationId']}",
+                label=f"{s['StationName']} ({s['StationId']}) {geo(s).get('TownName', '')} · {kinds[s['_dataset']]}",
             )
             for s in in_county
         ]
+        first = not self._async_current_entries()
+        # Earthquake/typhoon data is nationwide: enable on one entry only (default: the first).
         return self.async_show_form(
             step_id="station",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_STATION_ID, default=default["StationId"]): _select(options),
-                    # Earthquake data is not location specific; default on for the first entry only.
                     vol.Required(
-                        CONF_EARTHQUAKE, default=not self._async_current_entries()
-                    ): bool,
+                        "station", default=f"{default['_dataset']}:{default['StationId']}"
+                    ): _select(options),
+                    vol.Required(CONF_EARTHQUAKE, default=first): bool,
+                    vol.Required(CONF_TYPHOON, default=first): bool,
                 }
             ),
         )

@@ -17,20 +17,24 @@ from .const import (
     CONF_API_KEY,
     CONF_COUNTY,
     CONF_EARTHQUAKE,
+    CONF_STATION_DATASET,
     CONF_STATION_ID,
     CONF_TOWNSHIP,
+    CONF_TYPHOON,
     COUNTY_DATASETS,
     DATASET_EARTHQUAKE,
     DATASET_FORECAST,
     DATASET_OBSERVATION,
+    DATASET_TYPHOON,
     DOMAIN,
     SCAN_EARTHQUAKE,
     SCAN_FORECAST,
     SCAN_OBSERVATION,
+    SCAN_TYPHOON,
 )
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = ["sensor", "weather"]
+PLATFORMS = ["sensor", "weather", "geo_location"]
 
 
 @dataclass
@@ -42,6 +46,7 @@ class CwaData:
     town_3d: DataUpdateCoordinator  # township, hourly/3-hourly for 3 days
     town_week: DataUpdateCoordinator  # township, 12-hourly for 1 week
     earthquake: DataUpdateCoordinator | None
+    typhoon: DataUpdateCoordinator | None
 
 
 def _make_coordinator(
@@ -80,11 +85,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     township = entry.data[CONF_TOWNSHIP]
     id_3d, id_week = COUNTY_DATASETS[county]
 
+    obs_dataset = entry.data.get(CONF_STATION_DATASET, DATASET_OBSERVATION)
+
     async def fetch_observation() -> dict[str, Any]:
-        records = await client.get(DATASET_OBSERVATION, StationId=station_id)
+        records = await client.get(obs_dataset, StationId=station_id)
         stations = records.get("Station") or []
         if not stations:
-            raise CwaError(f"Station {station_id} not found")
+            # Filtering by StationId unsupported/empty: fetch all and pick ours.
+            records = await client.get(obs_dataset)
+            stations = [s for s in records.get("Station") or [] if s.get("StationId") == station_id]
+        if not stations:
+            raise CwaError(f"Station {station_id} not found in {obs_dataset}")
         return stations[0]
 
     async def fetch_forecast() -> dict[str, Any]:
@@ -109,6 +120,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         quakes = records.get("Earthquake") or []
         return quakes[0] if quakes else {}
 
+    async def fetch_typhoon() -> dict[str, Any]:
+        return await client.get(DATASET_TYPHOON)
+
     data = CwaData(
         observation=_make_coordinator(
             hass, entry, "observation", SCAN_OBSERVATION, fetch_observation
@@ -125,6 +139,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if entry.data.get(CONF_EARTHQUAKE)
             else None
         ),
+        typhoon=(
+            _make_coordinator(hass, entry, "typhoon", SCAN_TYPHOON, fetch_typhoon)
+            if entry.data.get(CONF_TYPHOON)
+            else None
+        ),
     )
     for coordinator in (
         data.observation,
@@ -132,6 +151,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.town_3d,
         data.town_week,
         data.earthquake,
+        data.typhoon,
     ):
         if coordinator is not None:
             await coordinator.async_config_entry_first_refresh()

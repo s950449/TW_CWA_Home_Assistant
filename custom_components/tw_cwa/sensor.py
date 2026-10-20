@@ -28,6 +28,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpda
 from . import CwaData
 from .const import CONF_COUNTY, CONF_STATION_ID, CONF_TOWNSHIP, DOMAIN, MISSING
 from .forecast import num as _num
+from .typhoon import summarize
 
 
 def _text(value: Any) -> str | None:
@@ -58,7 +59,7 @@ def _forecast(element: str, field: str = "parameterName") -> Callable[[dict], An
 class CwaSensorDescription(SensorEntityDescription):
     source: str  # "observation" | "forecast" | "earthquake"
     value_fn: Callable[[dict], Any]
-    attrs_fn: Callable[[dict], dict[str, Any]] | None = None
+    attrs_fn: Callable[[dict, HomeAssistant], dict[str, Any]] | None = None
 
 
 SENSORS: tuple[CwaSensorDescription, ...] = (
@@ -146,7 +147,7 @@ SENSORS: tuple[CwaSensorDescription, ...] = (
         key="earthquake_magnitude", source="earthquake", translation_key="earthquake_magnitude",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: _num(_get(d, "EarthquakeInfo", "EarthquakeMagnitude", "MagnitudeValue")),
-        attrs_fn=lambda d: {
+        attrs_fn=lambda d, _hass: {
             "origin_time": _get(d, "EarthquakeInfo", "OriginTime"),
             "depth_km": _num(_get(d, "EarthquakeInfo", "FocalDepth")),
             "epicenter": _get(d, "EarthquakeInfo", "Epicenter", "Location"),
@@ -154,7 +155,22 @@ SENSORS: tuple[CwaSensorDescription, ...] = (
             "url": d.get("Web"),
         },
     ),
+    # --- Active tropical cyclones (NW Pacific) ---
+    CwaSensorDescription(
+        key="typhoon_count", source="typhoon", translation_key="typhoon_count",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: len(summarize(d, 0, 0)),
+        attrs_fn=lambda d, hass: _typhoon_attrs(d, hass),
+    ),
 )
+
+
+def _typhoon_attrs(data: dict, hass: HomeAssistant) -> dict[str, Any]:
+    cyclones = summarize(data, hass.config.latitude, hass.config.longitude)
+    attrs: dict[str, Any] = {"cyclones": cyclones}
+    if distances := [c["distance_km"] for c in cyclones if "distance_km" in c]:
+        attrs["nearest_distance_km"] = min(distances)
+    return attrs
 
 
 async def async_setup_entry(
@@ -199,4 +215,4 @@ class CwaSensor(CoordinatorEntity[DataUpdateCoordinator], SensorEntity):
         fn = self.entity_description.attrs_fn
         if fn is None or not self.coordinator.data:
             return None
-        return fn(self.coordinator.data)
+        return fn(self.coordinator.data, self.hass)

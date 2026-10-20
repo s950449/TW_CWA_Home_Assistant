@@ -6,14 +6,18 @@ DOMAIN = "tw_cwa"
 API_BASE = "https://opendata.cwa.gov.tw/api/v1/rest/datastore"
 
 DATASET_OBSERVATION = "O-A0003-001"
+DATASET_OBSERVATION_AUTO = "O-A0001-001"
 DATASET_FORECAST = "F-C0032-001"
 DATASET_EARTHQUAKE = "E-A0015-001"
+DATASET_TYPHOON = "W-C0034-005"
 
 CONF_API_KEY = "api_key"
 CONF_COUNTY = "county"
 CONF_TOWNSHIP = "township"
 CONF_STATION_ID = "station_id"
+CONF_STATION_DATASET = "station_dataset"
 CONF_EARTHQUAKE = "earthquake"
+CONF_TYPHOON = "typhoon"
 
 # Per-county township forecast datasets: county -> (3-day hourly/3-hourly, 1-week 12-hourly).
 # The all-Taiwan datasets (F-D0047-089/091) return no rows when filtered, so the
@@ -47,6 +51,7 @@ COUNTY_DATASETS: dict[str, tuple[str, str]] = {
 SCAN_OBSERVATION = timedelta(minutes=10)
 SCAN_FORECAST = timedelta(minutes=60)
 SCAN_EARTHQUAKE = timedelta(minutes=10)
+SCAN_TYPHOON = timedelta(minutes=30)
 
 # CWA uses -99 (number or string) or "-" for missing values.
 MISSING = {-99, -99.0, "-99", "-99.0", "-", "", None}

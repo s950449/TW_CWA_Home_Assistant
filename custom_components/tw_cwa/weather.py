@@ -82,13 +82,20 @@ class CwaWeather(CoordinatorEntity, WeatherEntity):
     def _obs(self) -> dict:
         return self.coordinator.data or {}
 
+    def _fallback(self, key: str) -> float | None:
+        """Forecast value for the current hour, used when the station reports no reading."""
+        hourly = self._hourly()
+        return hourly[0].get(key) if hourly else None
+
     @property
     def native_temperature(self) -> float | None:
-        return num(_obs(self._obs, "WeatherElement", "AirTemperature"))
+        value = num(_obs(self._obs, "WeatherElement", "AirTemperature"))
+        return value if value is not None else self._fallback("native_temperature")
 
     @property
     def humidity(self) -> float | None:
-        return num(_obs(self._obs, "WeatherElement", "RelativeHumidity"))
+        value = num(_obs(self._obs, "WeatherElement", "RelativeHumidity"))
+        return value if value is not None else self._fallback("humidity")
 
     @property
     def native_pressure(self) -> float | None:
@@ -96,7 +103,8 @@ class CwaWeather(CoordinatorEntity, WeatherEntity):
 
     @property
     def native_wind_speed(self) -> float | None:
-        return num(_obs(self._obs, "WeatherElement", "WindSpeed"))
+        value = num(_obs(self._obs, "WeatherElement", "WindSpeed"))
+        return value if value is not None else self._fallback("native_wind_speed")
 
     @property
     def native_wind_gust_speed(self) -> float | None:
