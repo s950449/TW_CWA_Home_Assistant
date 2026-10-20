@@ -1,0 +1,87 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Taiwan CWA Open Data",
+        "description": "Enter your API key from https://opendata.cwa.gov.tw (Authorization code).",
+        "data": {
+          "api_key": "API key"
+        }
+      },
+      "county": {
+        "title": "Choose county/city",
+        "data": {
+          "county": "County/city"
+        }
+      },
+      "township": {
+        "title": "Choose township/district",
+        "data": {
+          "township": "Township/district"
+        }
+      },
+      "station": {
+        "title": "Observation station",
+        "data": {
+          "station_id": "Observation station",
+          "earthquake": "Create latest earthquake sensor (not location specific; enable on one entry only)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key",
+      "cannot_connect": "Cannot connect to CWA open data",
+      "no_data": "The API returned no stations or locations",
+      "dataset_mismatch": "The township forecast dataset does not match this county"
+    },
+    "abort": {
+      "already_configured": "This location is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      },
+      "wind_direction": {
+        "name": "Wind direction"
+      },
+      "gust": {
+        "name": "Peak gust"
+      },
+      "precipitation": {
+        "name": "Precipitation"
+      },
+      "weather": {
+        "name": "Weather"
+      },
+      "forecast_weather": {
+        "name": "36h county: Forecast weather"
+      },
+      "forecast_pop": {
+        "name": "36h county: Forecast rain probability"
+      },
+      "forecast_min_temp": {
+        "name": "36h county: Forecast min temperature"
+      },
+      "forecast_max_temp": {
+        "name": "36h county: Forecast max temperature"
+      },
+      "forecast_comfort": {
+        "name": "36h county: Forecast comfort"
+      },
+      "earthquake_magnitude": {
+        "name": "Latest earthquake magnitude"
+      }
+    }
+  }
+}

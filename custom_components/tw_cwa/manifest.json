@@ -1,0 +1,11 @@
+{
+  "domain": "tw_cwa",
+  "name": "Taiwan CWA Open Data",
+  "codeowners": ["@s950449"],
+  "config_flow": true,
+  "documentation": "https://github.com/s950449/TW_CWA_Home_Assistant",
+  "issue_tracker": "https://github.com/s950449/TW_CWA_Home_Assistant/issues",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}

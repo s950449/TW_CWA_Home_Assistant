@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets / local config (never commit API keys)
+.env
+.env.*
+*.key
+secrets.yaml
+secrets.*.yaml
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+.claude/

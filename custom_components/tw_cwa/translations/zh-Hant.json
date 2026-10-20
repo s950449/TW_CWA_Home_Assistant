@@ -1,0 +1,87 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "中央氣象署開放資料",
+        "description": "請輸入從 https://opendata.cwa.gov.tw 取得的授權碼 (API Key)。",
+        "data": {
+          "api_key": "API Key"
+        }
+      },
+      "county": {
+        "title": "選擇縣市",
+        "data": {
+          "county": "縣市"
+        }
+      },
+      "township": {
+        "title": "選擇鄉鎮市區",
+        "data": {
+          "township": "鄉鎮市區"
+        }
+      },
+      "station": {
+        "title": "觀測站",
+        "data": {
+          "station_id": "觀測站",
+          "earthquake": "建立最新地震感測器 (與地點無關，只需在一個項目啟用)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "API Key 無效",
+      "cannot_connect": "無法連線至氣象署開放資料平台",
+      "no_data": "API 未回傳任何測站或縣市",
+      "dataset_mismatch": "鄉鎮預報資料集與縣市不符"
+    },
+    "abort": {
+      "already_configured": "此地點已設定"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "氣溫"
+      },
+      "humidity": {
+        "name": "相對濕度"
+      },
+      "pressure": {
+        "name": "氣壓"
+      },
+      "wind_speed": {
+        "name": "風速"
+      },
+      "wind_direction": {
+        "name": "風向"
+      },
+      "gust": {
+        "name": "最大陣風"
+      },
+      "precipitation": {
+        "name": "降水量"
+      },
+      "weather": {
+        "name": "天氣現象"
+      },
+      "forecast_weather": {
+        "name": "36小時縣市 預報天氣"
+      },
+      "forecast_pop": {
+        "name": "36小時縣市 預報降雨機率"
+      },
+      "forecast_min_temp": {
+        "name": "36小時縣市 預報最低溫"
+      },
+      "forecast_max_temp": {
+        "name": "36小時縣市 預報最高溫"
+      },
+      "forecast_comfort": {
+        "name": "36小時縣市 預報舒適度"
+      },
+      "earthquake_magnitude": {
+        "name": "最新地震規模"
+      }
+    }
+  }
+}
